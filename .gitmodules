@@ -1,0 +1,3 @@
+[submodule "EventManager"]
+	path = EventManager
+	url = https://github.com/cxm3593/EventManager.git

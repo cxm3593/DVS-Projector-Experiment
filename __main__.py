@@ -5,6 +5,8 @@
 from metavision_core.event_io import EventsIterator
 from metavision_sdk_core import PeriodicFrameGenerationAlgorithm
 from metavision_sdk_ui import EventLoop, BaseWindow, Window, UIAction, UIKeyEvent
+from metavision_core.event_io.raw_reader import initiate_device
+from metavision_hal import I_LL_Biases, I_TriggerIn
 import json
 import os.path
 
@@ -37,8 +39,10 @@ def main():
     # Process arguments
     args = parse_args()
 
-    # Events iterator on Camera or event file
-    mv_iterator = EventsIterator(input_path=serial_number, delta_t=1000)
+    # Initialize device
+    device = initiate_device('', use_external_triggers=[I_TriggerIn.Channel.MAIN])
+    triggers = device.get_i_event_ext_trigger_decoder()
+    mv_iterator = EventsIterator.from_device(device, delta_t=1000)
 
     # for evs in mv_iterator:
     print("Events are available!")
@@ -95,6 +99,7 @@ def main():
     duration_seconds = global_max_t / 1.0e6
     print(f"There were {global_counter} events in total.")
     print(f"The total duration was {duration_seconds:.2f} seconds.")
+
     if duration_seconds >= 1:  # No need to print this statistics if the total duration was too short
         print(f"There were {global_counter / duration_seconds :.2f} events per second on average.")
 
