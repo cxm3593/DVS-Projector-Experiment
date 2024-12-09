@@ -9,6 +9,8 @@ from metavision_core.event_io.raw_reader import initiate_device
 from metavision_hal import I_LL_Biases, I_TriggerIn
 import json
 import os.path
+import numpy as np
+import h5py
 
 def parse_args():
     import argparse
@@ -33,6 +35,11 @@ def main():
     config = {}
     with open(config_path, "r") as config_file:
         config = json.loads(config_file.read())
+
+    # Output file
+    output_recording_path = os.path.join(script_directory, "output_recording.h5")
+    output_file = h5py.File(output_recording_path, "a")
+
 
     serial_number = config["camera_serial_number"]
 
@@ -95,6 +102,12 @@ def main():
                 EventLoop.poll_and_dispatch()
                 event_frame_gen.process_events(evs)
 
+                # Write to output file
+                try:
+                    output_file.create_dataset(f"event_time{global_max_t}", data=evs)
+                except:
+                    print("Error in writing event to H5 file")
+
     # Print the global statistics
     duration_seconds = global_max_t / 1.0e6
     print(f"There were {global_counter} events in total.")
@@ -102,6 +115,9 @@ def main():
 
     if duration_seconds >= 1:  # No need to print this statistics if the total duration was too short
         print(f"There were {global_counter / duration_seconds :.2f} events per second on average.")
+
+    # Clean up
+    output_file.close()
 
 
 if __name__ == "__main__":
